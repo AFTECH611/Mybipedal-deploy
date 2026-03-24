@@ -1,0 +1,4 @@
+port: /dev/ttyACM0
+baud: 921600
+do_config: false
+publish_frequency: 1000.0

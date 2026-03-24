@@ -1,0 +1,114 @@
+publish_frequency: 1000.0
+enable_actuator: true
+actuator_debug: true
+
+joint_list:
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_pitch_joint
+
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_pitch_joint
+
+actuator_list:
+  - left_hip_roll_actuator
+  - left_hip_pitch_actuator
+  - left_knee_actuator
+  - left_ankle_pitch_actuator
+
+  - right_hip_roll_actuator
+  - right_hip_pitch_actuator
+  - right_knee_actuator
+  - right_ankle_pitch_actuator
+
+can_service:
+  bind_cpu: 3
+  cycle_time_ns: 1000000
+  rt_priority: 80
+
+driver_network:
+  - name: lower_body_joint_network
+    interface: ["can0", "can1", "can2", "can3"]
+    enable: true
+    canbus_1:
+      - name: left_hip_roll_actuator
+        type: Robstride_00
+        can_id: 1
+      - name: left_hip_pitch_actuator
+        type: Robstride_02
+        can_id: 2
+    canbus_2:
+      - name: left_knee_actuator
+        type: Robstride_02
+        can_id: 1
+      - name: left_ankle_pitch_actuator
+        type: Robstride_00
+        can_id: 2
+    canbus_3:
+      - name: right_hip_roll_actuator
+        type: Robstride_00
+        can_id: 1
+      - name: right_hip_pitch_actuator
+        type: Robstride_02
+        can_id: 2
+    canbus_4:
+      - name: right_knee_actuator
+        type: Robstride_02
+        can_id: 1
+      - name: right_ankle_pitch_actuator
+        type: Robstride_00
+        can_id: 2
+
+transmission:
+  - name: left_hip_roll_trans
+    type: SimpleTransmission
+    joint: left_hip_roll_joint
+    actuator: left_hip_roll_actuator
+    direction: 1.0
+  
+  - name: left_hip_pitch_trans
+    type: SimpleTransmission
+    joint: left_hip_pitch_joint
+    actuator: left_hip_pitch_actuator
+    direction: 1.0
+  
+  - name: left_knee_trans
+    type: SimpleTransmission
+    joint: left_knee_joint
+    actuator: left_knee_actuator
+    direction: 1.0
+  
+  - name: left_ankle_pitch_trans
+    type: SimpleTransmission
+    joint: left_ankle_pitch_joint
+    actuator: left_ankle_pitch_actuator
+    direction: 1.0
+
+  - name: right_hip_roll_trans
+    type: SimpleTransmission
+    joint: right_hip_roll_joint
+    actuator: right_hip_roll_actuator
+    direction: 1.0
+  
+  - name: right_hip_pitch_trans
+    type: SimpleTransmission
+    joint: right_hip_pitch_joint
+    actuator: right_hip_pitch_actuator
+    direction: 1.0
+
+  - name: right_knee_trans
+    type: SimpleTransmission
+    joint: right_knee_joint
+    actuator: right_knee_actuator
+    direction: 1.0
+
+  - name: right_ankle_pitch_trans
+    type: SimpleTransmission
+    joint: right_ankle_pitch_joint
+    actuator: right_ankle_pitch_actuator
+    direction: 1.0
+
+    
