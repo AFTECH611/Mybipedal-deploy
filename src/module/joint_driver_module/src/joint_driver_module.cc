@@ -86,17 +86,25 @@ bool JointDriverModule::InitDriver(YAML::Node& cfg_node) {
   // create dcu and attch actuators to it
   for (const auto& driver_cfg : driver_network_cfg_) {
     if (!driver_cfg.enable) continue;
-    bool ret = xyber_ctrl_->CreateDevice(driver_cfg.name, driver_cfg.interfaces);
+    std::array<std::string, 4> arr;
+    const auto& vec = driver_cfg.interfaces;
+    if (vec.size() != 4) {
+        AIMRT_ERROR_THROW("Interface size must be 4");
+        return false;
+    }
+    std::copy(vec.begin(), vec.end(), arr.begin());
+
+    bool ret = xyber_ctrl_->CreateDevice(driver_cfg.name, arr);
     AIMRT_CHECK_ERROR_THROW(ret, "Device {} create failed.", driver_cfg.name);
 
-    for (size_t ch = 0; ch <= (size_t)CtrlChannel::CTRL_CH4; ch++) {
+    for (size_t ch = 0; ch <= (size_t)CtrlChannel::CH4; ch++) {
       for (const auto& actr : driver_cfg.ch[ch]) {
         if (std::find(actuator_name_list_.begin(), actuator_name_list_.end(), actr.name) ==
             actuator_name_list_.end()) {
           AIMRT_WARN("Actuator {} not found in actuator_list. ignored.", actr.name);
           continue;
         }
-        ret = xyber_ctrl_->AttachActuator(driver_cfg.name, (CtrlChannel)ch, StringToType(actr.type),
+        ret = xyber_ctrl_->AttachActuator(driver_cfg.name, ch, StringToType(actr.type),
                                           actr.name, actr.can_id);
         AIMRT_CHECK_ERROR_THROW(ret, "Actuator {} register failed.", actr.name);
       }

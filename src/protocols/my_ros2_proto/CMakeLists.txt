@@ -9,12 +9,16 @@ string(REPLACE "::" "_" CUR_SUPERIOR_NAMESPACE_UNDERLINE ${CUR_SUPERIOR_NAMESPAC
 
 # Set target name
 set(CUR_TARGET_NAME ${CUR_DIR})
+set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
 
 project(${CUR_TARGET_NAME})
 
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
+
+find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
+find_package(rmw_fastrtps_cpp REQUIRED)
 
 # Set build mode as shared library (ros2 only support shared library)
 set(CUR_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})

@@ -95,6 +95,7 @@ bool ControlModule::Initialize(aimrt::CoreRef core) {
           for (const auto& name : controller_names) {
             controller_map_[name]->SetImuData(*msg);
           }
+          //AIMRT_INFO("Receive imu data, linear_acceleration: [{:.2f}, {:.2f}, {:.2f}]", msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
         });
 
       subs_.push_back(core_.GetChannelHandle().GetSubscriber(cfg_node["sub_joint_state_name"].as<std::string>()));

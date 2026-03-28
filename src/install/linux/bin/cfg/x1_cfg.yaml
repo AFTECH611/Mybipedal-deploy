@@ -4,7 +4,7 @@ aimrt:
       - name: ros2_plugin
         path: ./libaimrt_ros2_plugin.so
         options:
-          node_name: x1_rl_ctrl_node
+          node_name: mybipedal_rl_ctrl_node
           executor_type: MultiThreaded # SingleThreaded/StaticSingleThreaded/MultiThreaded
           executor_thread_num: 4
   log: # 日志配置
@@ -14,7 +14,7 @@ aimrt:
       - type: rotate_file # 文件
         options:
           path: ./log
-          filename: x1_rl_ctrl.log
+          filename: mybipedal_rl_ctrl.log
           max_file_size_m: 4
           max_file_num: 10
   executor: # 执行器配置
@@ -49,14 +49,18 @@ aimrt:
         enable_modules:
           - JoyStickModule
           - ControlModule
-          - DcuDriverModule
+          - ImuModule
+          - JointDriverModule
     modules: # 模块
       - name: JoyStickModule
         log_lvl: INFO
-        cfg_file_path: ./cfg/joy_stick_module/joy_x1.yaml
+        cfg_file_path: ./cfg/joy_stick_module/joy_mybipedal.yaml
       - name: ControlModule
         log_lvl: INFO
-        cfg_file_path: ./cfg/control_module/rl_x1.yaml
-      - name: DcuDriverModule
+        cfg_file_path: ./cfg/control_module/rl_mybipedal.yaml
+      - name: ImuModule
+        log_lvl: INFO
+        cfg_file_path: ./cfg/imu_module/imu.yaml
+      - name: JointDriverModule
         log_lvl: DEBUG
-        cfg_file_path: ./cfg/dcu_driver_module/dcu_x1.yaml
+        cfg_file_path: ./cfg/joint_driver_module/joint_control.yaml

@@ -39,28 +39,28 @@ driver_network:
         can_id: 1
       - name: left_hip_pitch_actuator
         type: Robstride_02
-        can_id: 2
+        can_id: 3
     canbus_2:
       - name: left_knee_actuator
         type: Robstride_02
-        can_id: 1
+        can_id: 2
       - name: left_ankle_pitch_actuator
         type: Robstride_00
-        can_id: 2
+        can_id: 4
     canbus_3:
       - name: right_hip_roll_actuator
         type: Robstride_00
         can_id: 1
       - name: right_hip_pitch_actuator
         type: Robstride_02
-        can_id: 2
+        can_id: 3
     canbus_4:
       - name: right_knee_actuator
         type: Robstride_02
-        can_id: 1
+        can_id: 2
       - name: right_ankle_pitch_actuator
         type: Robstride_00
-        can_id: 2
+        can_id: 4
 
 transmission:
   - name: left_hip_roll_trans

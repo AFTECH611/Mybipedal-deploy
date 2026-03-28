@@ -2,11 +2,14 @@
 string(REGEX REPLACE ".*/\(.*\)" "\\1" CUR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set target name
-set(CUR_TARGET_NAME "robstride_api")
+set(CUR_TARGET_NAME "robstride_controller")
 
 # Set file collection
 file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
-file(GLOB_RECURSE src src/*.cpp)
+file(GLOB_RECURSE src 
+    src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../protocol/*.cpp
+)
 
 # Add target
 add_library(${CUR_TARGET_NAME} STATIC)
@@ -26,12 +29,6 @@ target_sources(
   ${CUR_TARGET_NAME} INTERFACE FILE_SET HEADERS BASE_DIRS
                                ${CMAKE_CURRENT_SOURCE_DIR} FILES ${head_files})
 
-# Set link libraries of target
-target_link_libraries(${CUR_TARGET_NAME} PRIVATE 
-    Threads::Threads 
-    Boost::boost 
-    spdlog::spdlog
-)
 
 install(
   TARGETS ${CUR_TARGET_NAME}

@@ -11,6 +11,7 @@
 // projects
 #include "aimrt_module_cpp_interface/module_base.h"
 #include "joint_driver_module/config_parse.h"
+#include "joint_driver_module/transmission.h"
 #include "joint_driver_module/robstride_controller/robstride_api/include/xyber_controller.h"
 #include "my_ros2_proto/msg/joint_command.hpp"
 

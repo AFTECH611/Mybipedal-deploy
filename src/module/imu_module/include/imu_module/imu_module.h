@@ -1,9 +1,14 @@
 // Copyright (c) 2026, Mybipedal.
 // All rights reserved.
 #pragma once
+
+// cpp
+#include <future>
 #include <thread>
+
+// projects
 #include "aimrt_module_cpp_interface/module_base.h"
-#include "dm_imu_l1/include/dm_imu/imu_driver.h"
+#include "dm_imu/imu_driver.h"
 
 namespace mybipedal_deploy::imu_module {
 
@@ -12,25 +17,28 @@ class ImuModule : public aimrt::ModuleBase {
   ImuModule() = default;
   ~ImuModule() override = default;
 
-  [[nodiscard]] aimrt::ModuleInfo Info() const override {
-    return aimrt::ModuleInfo{.name = "ImuModule"};
-  }
   bool Initialize(aimrt::CoreRef core) override;
   bool Start() override;
   void Shutdown() override;
 
  private:
+  [[nodiscard]] aimrt::ModuleInfo Info() const override {
+    return aimrt::ModuleInfo{.name = "ImuModule"};
+  }
+
+ private:
+  void PublishLoop();
   auto GetLogger() { return core_.GetLogger(); }
 
  private:
-  aimrt::CoreRef core_;
-  std::shared_ptr<dm_imu::ImuDriver> imu_;
-
+  std::atomic_bool is_running_ = false;
+  std::thread publish_thread_;
   std::string port_;
   int    baud_{921600};
-  bool   do_config_{true};
-  double publish_frequency_{1000.0};
-
+  bool   do_config_{false};
+  double publish_frequency_ = 100.0f;
+  std::shared_ptr<dm_imu::ImuDriver> imu_;
+  aimrt::CoreRef core_;
   aimrt::channel::PublisherRef pub_imu_;
 };
 

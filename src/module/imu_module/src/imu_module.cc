@@ -14,10 +14,12 @@ bool ImuModule::Initialize(aimrt::CoreRef core) {
     baud_              = cfg_node["baud"].as<int>();
     do_config_         = cfg_node["do_config"].as<bool>();
     publish_frequency_ = cfg_node["publish_frequency"].as<double>();
-
     // Tạo driver — chưa open hardware
     imu_ = std::make_shared<dm_imu::ImuDriver>(port_, baud_);
-
+    if (!imu_->open(do_config_)) {
+      AIMRT_ERROR("Cannot open IMU on port {}", port_);
+      return false;
+    }
     pub_imu_ = core_.GetChannelHandle().GetPublisher("/imu/data");
     aimrt::channel::RegisterPublishType<sensor_msgs::msg::Imu>(pub_imu_);
 
@@ -30,44 +32,14 @@ bool ImuModule::Initialize(aimrt::CoreRef core) {
 }
 
 bool ImuModule::Start() {
-  // Dùng PUSH callback — không cần publish_thread_ riêng
-  aimrt::channel::PublisherProxy<sensor_msgs::msg::Imu> pub(pub_imu_);
-    
-  uint32_t every_n = static_cast<uint32_t>(1000.0 / publish_frequency_);
-  if (every_n < 1) every_n = 1;  // giới hạn tối đa 1000Hz
+  is_running_ = true;
+  publish_thread_ = std::thread(&ImuModule::PublishLoop, this);
 
-  imu_->setObsCallback([this, pub](const dm_imu::ImuObservation& obs) mutable {
-    sensor_msgs::msg::Imu msg;
-    msg.header.stamp.sec     = obs.timestamp_ns / 1'000'000'000ULL;
-    msg.header.stamp.nanosec = obs.timestamp_ns % 1'000'000'000ULL;
-    msg.header.frame_id      = "imu_link";
-
-    msg.orientation.w = obs.qw;   // ✅ đúng field name
-    msg.orientation.x = obs.qx;
-    msg.orientation.y = obs.qy;
-    msg.orientation.z = obs.qz;
-
-    msg.angular_velocity.x = obs.gyr_x;  // ✅
-    msg.angular_velocity.y = obs.gyr_y;
-    msg.angular_velocity.z = obs.gyr_z;
-
-    msg.linear_acceleration.x = obs.acc_x;  // ✅
-    msg.linear_acceleration.y = obs.acc_y;
-    msg.linear_acceleration.z = obs.acc_z;
-
-    pub.Publish(msg);
-  }, every_n);
-
-  if (!imu_->open(do_config_)) {
-    AIMRT_ERROR("Cannot open IMU on port {}", port_);
-    return false;
-  }
-
-  AIMRT_INFO("Started succeeded.");
   return true;
 }
 
 void ImuModule::Shutdown() {
+  is_running_ = false;
   if (imu_) {
     imu_->setObsCallback(nullptr, 1);
     imu_->close();
@@ -75,4 +47,36 @@ void ImuModule::Shutdown() {
   }
 }
 
+void ImuModule::PublishLoop() {
+  aimrt::channel::PublisherProxy<sensor_msgs::msg::Imu> pub_imu(pub_imu_);
+  sensor_msgs::msg::Imu imu_msg;
+  auto period = std::chrono::nanoseconds((uint64_t)(1 / publish_frequency_ * 1000000000));
+  auto next_loop_time = std::chrono::steady_clock::now();
+  while (is_running_) {
+    // get time
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    builtin_interfaces::msg::Time stamp;
+    stamp.sec = now.tv_sec;
+    stamp.nanosec = now.tv_usec * 1000;
+    dm_imu::ImuObservation imu = imu_->getObs();
+    imu_msg.angular_velocity.x = imu.gyr_x;
+    imu_msg.angular_velocity.y = imu.gyr_y;
+    imu_msg.angular_velocity.z = imu.gyr_z;
+    imu_msg.linear_acceleration.x = imu.acc_x;
+    imu_msg.linear_acceleration.y = imu.acc_y;
+    imu_msg.linear_acceleration.z = imu.acc_z;
+    imu_msg.orientation.w = imu.qw;
+    imu_msg.orientation.x = imu.qx;
+    imu_msg.orientation.y = imu.qy;
+    imu_msg.orientation.z = imu.qz;
+    imu_msg.header.stamp = stamp;
+    pub_imu.Publish(imu_msg);
+    // AIMRT_INFO("Publish imu data, linear_acceleration: [{:.5f}, {:.5f}, {:.5f}]", imu.acc_x, imu.acc_y, imu.acc_z);
+
+    next_loop_time += period;
+    std::this_thread::sleep_until(next_loop_time);
+  }
+}
 }  // namespace mybipedal_deploy::imu_module

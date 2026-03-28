@@ -9,7 +9,10 @@ add_subdirectory(module/joint_driver_module)
 add_subdirectory(module/joy_stick_module)
 add_subdirectory(module/control_module)
 add_subdirectory(module/imu_module)
-add_subdirectory(module/sim_module)
+
+if(MYBIPEDAL_DEPLOY_SIMULATION)
+  add_subdirectory(module/sim_module)
+endif()
 
 # pkg
 add_subdirectory(pkg/pkg1)
