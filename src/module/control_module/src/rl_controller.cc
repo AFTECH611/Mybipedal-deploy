@@ -193,16 +193,15 @@ void RLController::ComputeObservation() {
     phase = phase / walk_step_conf_.cycle_time;
 
     // clang-format off
-    propri_obs << sin(2 * M_PI * phase),  // 1
-                  cos(2 * M_PI * phase),  // 1
-                  joy_data_.linear.x * obs_scales_.lin_vel, // 1
-                  joy_data_.linear.y * obs_scales_.lin_vel, // 1
-                  joy_data_.angular.z, // 1
-                  (propri_.joint_pos - joint_conf_.init_state) * obs_scales_.dof_pos, // action_size
-                  propri_.joint_vel * obs_scales_.dof_vel, // action_size
-                  last_actions_, // action_size
-                  propri_.base_ang_vel * obs_scales_.ang_vel, // 3
-                  propri_.base_euler_xyz * obs_scales_.quat; // 3
+    propri_obs <<  
+      propri_.base_ang_vel * obs_scales_.ang_vel,               // [0:3]  ang_vel
+      propri_.projected_gravity,                                  // [3:6]  gravity vector
+      joy_data_.linear.x  * obs_scales_.lin_vel,                 // [6]    vx
+      joy_data_.linear.y  * obs_scales_.lin_vel,                 // [7]    vy
+      joy_data_.angular.z * obs_scales_.ang_vel,                 // [8]    dyaw
+      (propri_.joint_pos - joint_conf_.init_state) * obs_scales_.dof_pos,  // [9:17]
+      propri_.joint_vel * obs_scales_.dof_vel,                   // [17:25]
+      last_actions_;                                             // [25:33]
     // clang-format on
   }
 

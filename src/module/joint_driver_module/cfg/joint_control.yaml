@@ -6,26 +6,26 @@ joint_list:
   - left_hip_roll_joint
   - left_hip_pitch_joint
   - left_knee_joint
-  - left_ankle_pitch_joint
+  - left_ankle_joint
 
   - right_hip_roll_joint
   - right_hip_pitch_joint
   - right_knee_joint
-  - right_ankle_pitch_joint
+  - right_ankle_joint
 
 actuator_list:
   - left_hip_roll_actuator
   - left_hip_pitch_actuator
   - left_knee_actuator
-  - left_ankle_pitch_actuator
+  - left_ankle_actuator
 
   - right_hip_roll_actuator
   - right_hip_pitch_actuator
   - right_knee_actuator
-  - right_ankle_pitch_actuator
+  - right_ankle_actuator
 
 can_service:
-  bind_cpu: 3
+  bind_cpu: 5
   cycle_time_ns: 1000000
   rt_priority: 80
 
@@ -44,7 +44,7 @@ driver_network:
       - name: left_knee_actuator
         type: Robstride_02
         can_id: 2
-      - name: left_ankle_pitch_actuator
+      - name: left_ankle_actuator
         type: Robstride_00
         can_id: 4
     canbus_3:
@@ -58,7 +58,7 @@ driver_network:
       - name: right_knee_actuator
         type: Robstride_02
         can_id: 2
-      - name: right_ankle_pitch_actuator
+      - name: right_ankle_actuator
         type: Robstride_00
         can_id: 4
 
@@ -81,10 +81,10 @@ transmission:
     actuator: left_knee_actuator
     direction: 1.0
   
-  - name: left_ankle_pitch_trans
+  - name: left_ankle_trans
     type: SimpleTransmission
-    joint: left_ankle_pitch_joint
-    actuator: left_ankle_pitch_actuator
+    joint: left_ankle_joint
+    actuator: left_ankle_actuator
     direction: 1.0
 
   - name: right_hip_roll_trans
@@ -105,10 +105,10 @@ transmission:
     actuator: right_knee_actuator
     direction: 1.0
 
-  - name: right_ankle_pitch_trans
+  - name: right_ankle_trans
     type: SimpleTransmission
-    joint: right_ankle_pitch_joint
-    actuator: right_ankle_pitch_actuator
+    joint: right_ankle_joint
+    actuator: right_ankle_actuator
     direction: 1.0
 
     

@@ -12,7 +12,7 @@ cmake -B build \
     -DCMAKE_INSTALL_PREFIX=./build/install \
     -DMYBIPEDAL_DEPLOY_BUILD_TESTS=OFF \
     -DMYBIPEDAL_DEPLOY_SIMULATION=ON \
-    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.10 \
     "$@"
 
 if [ -d ./build/install ]; then

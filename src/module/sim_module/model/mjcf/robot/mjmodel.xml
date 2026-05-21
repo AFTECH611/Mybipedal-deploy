@@ -2,7 +2,7 @@
   <compiler angle='radian' eulerseq="XYZ" meshdir="../meshes"
     autolimits="true" />
 
-  <option timestep="0.005" />
+  <option timestep="0.001" />
 
   <visual>
     <global azimuth="150" elevation="-20" />
@@ -172,14 +172,14 @@
   </worldbody>
 
   <actuator>
-    <motor name = 'motor_left_hip_roll_joint' joint = 'left_hip_roll_joint' gear="1" ctrlrange = '-14 14' />
-    <motor name = 'motor_right_hip_roll_joint' joint = 'right_hip_roll_joint' gear="1" ctrlrange = '-14 14' />
-    <motor name = 'motor_left_hip_pitch_joint' joint = 'left_hip_pitch_joint' gear="1" ctrlrange = '-17 17' />
-    <motor name = 'motor_right_hip_pitch_joint' joint = 'right_hip_pitch_joint' gear="1" ctrlrange = '-17 17' />
-    <motor name = 'motor_left_knee_joint' joint = 'left_knee_joint' gear="1" ctrlrange = '-17 17' />
-    <motor name = 'motor_right_knee_joint' joint = 'right_knee_joint' gear="1" ctrlrange = '-17 17' />
-    <motor name = 'motor_left_ankle_joint' joint = 'left_ankle_joint' gear="1" ctrlrange = '-14 14' />
-    <motor name = 'motor_right_ankle_joint' joint = 'right_ankle_joint' gear="1" ctrlrange = '-14 14' />
+    <motor name='motor_left_hip_roll_joint'   joint='left_hip_roll_joint'   gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_left_hip_pitch_joint'  joint='left_hip_pitch_joint'  gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_left_knee_joint'       joint='left_knee_joint'       gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_left_ankle_joint'      joint='left_ankle_joint'      gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_right_hip_roll_joint'  joint='right_hip_roll_joint'  gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_right_hip_pitch_joint' joint='right_hip_pitch_joint' gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_right_knee_joint'      joint='right_knee_joint'      gear="1" ctrlrange='-100 100'/>
+    <motor name='motor_right_ankle_joint'     joint='right_ankle_joint'     gear="1" ctrlrange='-100 100'/>
   </actuator>
 
     <sensor>
@@ -217,7 +217,7 @@
 
 
   <keyframe>
-    <key name = "home_default" qpos = "0 0 0.9 1 0 0 0 0. 0. 0. 0. 0. 0. 0. 0."/>
+    <key name = "home_default" qpos = "0 0 1.2 1 0 0 0 0. 0. 0. 0. 0. 0. 0. 0."/>
   </keyframe>
 
 </mujoco>

@@ -40,9 +40,9 @@ public:
      * @param bind_cpu       CPU affinity; -1 = skip; dùng isolated core
      */
     bool open(bool configure_imu = true,
-              const std::string& rt_name  = "imu_reader",
-              int                rt_priority = 80,
-              int                bind_cpu    = -1);
+              const std::string& rt_name = "imu_reader",
+              int                rt_priority,
+              int                bind_cpu);
     void close();
     bool isOpen() const;
 

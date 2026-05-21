@@ -14,9 +14,11 @@ bool ImuModule::Initialize(aimrt::CoreRef core) {
     baud_              = cfg_node["baud"].as<int>();
     do_config_         = cfg_node["do_config"].as<bool>();
     publish_frequency_ = cfg_node["publish_frequency"].as<double>();
+    bind_cpu_          = cfg_node["bind_cpu"].as<int>(); 
+    rt_priority_       = cfg_node["rt_priority"].as<int>();
     // Tạo driver — chưa open hardware
     imu_ = std::make_shared<dm_imu::ImuDriver>(port_, baud_);
-    if (!imu_->open(do_config_)) {
+    if (!imu_->open(do_config_, "imu_reader", rt_priority_, bind_cpu_)) {
       AIMRT_ERROR("Cannot open IMU on port {}", port_);
       return false;
     }
