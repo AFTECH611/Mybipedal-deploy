@@ -8,6 +8,8 @@ set(CUR_TARGET_NAME "oled")
 file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 file(GLOB_RECURSE src src/*.cpp)
 
+add_subdirectory(example)
+
 # Add target
 add_library(${CUR_TARGET_NAME} STATIC)
 

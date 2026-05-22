@@ -26,9 +26,10 @@
 #include <thread>
 #include <vector>
 
+// libgpiod v2 opaque types (forward declarations)
 struct gpiod_chip;
-struct gpiod_line;
-struct gpiod_line_bulk;
+struct gpiod_line_request;
+struct gpiod_edge_event_buffer;
 
 namespace oled {
 
@@ -169,11 +170,18 @@ public:
     bool pop_press();
 
 private:
-    Config       cfg_;
-    gpiod_chip*  chip_     = nullptr;
-    gpiod_line*  line_a_   = nullptr;
-    gpiod_line*  line_b_   = nullptr;
-    gpiod_line*  line_btn_ = nullptr;
+    Config cfg_;
+
+    // libgpiod v2 objects
+    gpiod_chip*              chip_       = nullptr;
+    gpiod_line_request*      req_ab_     = nullptr;  // A + B lines (input, edge on A)
+    gpiod_line_request*      req_btn_    = nullptr;  // BTN line    (input, both edges)
+    gpiod_edge_event_buffer* ev_buf_ab_  = nullptr;
+    gpiod_edge_event_buffer* ev_buf_btn_ = nullptr;
+
+    // A-line fd and B-line offset inside req_ab_
+    // B is requested as plain input (no edge), read via get_value
+    unsigned off_b_ = 0;  // offset of B within req_ab_ (index 1)
 
     std::atomic<int>  delta_  {0};
     std::atomic<bool> pressed_{false};

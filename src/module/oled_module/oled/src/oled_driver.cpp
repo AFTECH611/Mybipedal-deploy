@@ -498,26 +498,106 @@ void Canvas::joystick_pad(int x, int y, int size, float sx, float sy) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  RotaryEncoder  (không đổi — poll_thread_ là bắt buộc vì libgpiod blocking)
+//  RotaryEncoder  — libgpiod v2 API
+//
+//  v1 → v2 mapping:
+//    gpiod_chip_open()                    → gpiod_chip_open()          (same)
+//    gpiod_chip_get_line() + request_*()  → gpiod_chip_request_lines() (new)
+//    gpiod_line_bulk / event_wait_bulk    → poll(fd) + read_edge_events (new)
+//    gpiod_line_get_value()               → gpiod_line_request_get_value() (new)
+//    gpiod_line_release()                 → gpiod_line_request_release() (new)
+//
+//  Chiến lược:
+//    • req_ab_  = request chứa [pin_a, pin_b]: A detect BOTH edges, B input only
+//    • req_btn_ = request chứa [pin_btn]:      detect BOTH edges
+//    • poll_loop() dùng poll(2) trên req_ab_.fd() và req_btn_.fd()
+//      → không block vĩnh viễn, timeout 10ms, check running_ flag
+//    • Đọc B bằng gpiod_line_request_get_value() (không cần edge event)
 // ═══════════════════════════════════════════════════════════════════════════
 
+#include <poll.h>
+
 RotaryEncoder::RotaryEncoder(const Config& cfg) : cfg_(cfg) {
+    // ── 1. Mở chip ────────────────────────────────────────────────────────────
     chip_ = gpiod_chip_open(cfg_.gpiochip.c_str());
     if (!chip_)
         throw std::runtime_error("RotaryEncoder: cannot open " + cfg_.gpiochip);
 
-    line_a_   = gpiod_chip_get_line(chip_, cfg_.pin_a);
-    line_b_   = gpiod_chip_get_line(chip_, cfg_.pin_b);
-    line_btn_ = gpiod_chip_get_line(chip_, cfg_.pin_btn);
-    if (!line_a_ || !line_b_ || !line_btn_)
-        throw std::runtime_error("RotaryEncoder: invalid GPIO pin");
+    // ── 2. Request A + B cùng nhau  ──────────────────────────────────────────
+    //   A: BOTH edges (để detect xoay)
+    //   B: INPUT only  (chỉ đọc giá trị khi A edge xảy ra)
+    {
+        unsigned offsets_ab[2] = {cfg_.pin_a, cfg_.pin_b};
+        off_b_ = 1;  // B là line index 1 trong req_ab_
 
-    if (gpiod_line_request_both_edges_events(line_a_,   "oled-enc-a")   < 0 ||
-        gpiod_line_request_input            (line_b_,   "oled-enc-b")   < 0 ||
-        gpiod_line_request_both_edges_events(line_btn_, "oled-enc-btn") < 0)
-        throw std::runtime_error("RotaryEncoder: gpiod_line_request failed");
+        gpiod_request_config* rcfg = gpiod_request_config_new();
+        if (!rcfg) throw std::runtime_error("RotaryEncoder: request_config_new failed");
+        gpiod_request_config_set_consumer(rcfg, "oled-enc-ab");
 
-    last_a_ = gpiod_line_get_value(line_a_);
+        gpiod_line_config* lcfg = gpiod_line_config_new();
+        if (!lcfg) { gpiod_request_config_free(rcfg); throw std::runtime_error("RotaryEncoder: line_config_new failed"); }
+
+        // Line A — BOTH edges, pull-up
+        gpiod_line_settings* sA = gpiod_line_settings_new();
+        gpiod_line_settings_set_direction(sA, GPIOD_LINE_DIRECTION_INPUT);
+        gpiod_line_settings_set_edge_detection(sA, GPIOD_LINE_EDGE_BOTH);
+        gpiod_line_settings_set_bias(sA, GPIOD_LINE_BIAS_PULL_UP);
+        gpiod_line_config_add_line_settings(lcfg, &offsets_ab[0], 1, sA);
+        gpiod_line_settings_free(sA);
+
+        // Line B — input only, pull-up
+        gpiod_line_settings* sB = gpiod_line_settings_new();
+        gpiod_line_settings_set_direction(sB, GPIOD_LINE_DIRECTION_INPUT);
+        gpiod_line_settings_set_bias(sB, GPIOD_LINE_BIAS_PULL_UP);
+        gpiod_line_config_add_line_settings(lcfg, &offsets_ab[1], 1, sB);
+        gpiod_line_settings_free(sB);
+
+        req_ab_ = gpiod_chip_request_lines(chip_, rcfg, lcfg);
+        gpiod_line_config_free(lcfg);
+        gpiod_request_config_free(rcfg);
+        if (!req_ab_)
+            throw std::runtime_error("RotaryEncoder: request A+B lines failed");
+    }
+
+    // ── 3. Request BTN ────────────────────────────────────────────────────────
+    {
+        unsigned offset_btn = cfg_.pin_btn;
+
+        gpiod_request_config* rcfg = gpiod_request_config_new();
+        if (!rcfg) throw std::runtime_error("RotaryEncoder: request_config_new (btn) failed");
+        gpiod_request_config_set_consumer(rcfg, "oled-enc-btn");
+
+        gpiod_line_config* lcfg = gpiod_line_config_new();
+        if (!lcfg) { gpiod_request_config_free(rcfg); throw std::runtime_error("RotaryEncoder: line_config_new (btn) failed"); }
+
+        gpiod_line_settings* sBtn = gpiod_line_settings_new();
+        gpiod_line_settings_set_direction(sBtn, GPIOD_LINE_DIRECTION_INPUT);
+        gpiod_line_settings_set_edge_detection(sBtn, GPIOD_LINE_EDGE_BOTH);
+        gpiod_line_settings_set_bias(sBtn, GPIOD_LINE_BIAS_PULL_UP);
+        gpiod_line_settings_set_debounce_period(sBtn,
+            std::chrono::microseconds(cfg_.debounce_ms * 1000));
+        gpiod_line_config_add_line_settings(lcfg, &offset_btn, 1, sBtn);
+        gpiod_line_settings_free(sBtn);
+
+        req_btn_ = gpiod_chip_request_lines(chip_, rcfg, lcfg);
+        gpiod_line_config_free(lcfg);
+        gpiod_request_config_free(rcfg);
+        if (!req_btn_)
+            throw std::runtime_error("RotaryEncoder: request BTN line failed");
+    }
+
+    // ── 4. Allocate event buffers ─────────────────────────────────────────────
+    ev_buf_ab_  = gpiod_edge_event_buffer_new(8);
+    ev_buf_btn_ = gpiod_edge_event_buffer_new(4);
+    if (!ev_buf_ab_ || !ev_buf_btn_)
+        throw std::runtime_error("RotaryEncoder: edge_event_buffer_new failed");
+
+    // ── 5. Seed initial A state ───────────────────────────────────────────────
+    {
+        gpiod_line_value val = gpiod_line_request_get_value(req_ab_, cfg_.pin_a);
+        last_a_ = (val == GPIOD_LINE_VALUE_ACTIVE) ? 1 : 0;
+    }
+
     running_.store(true);
     poll_thread_ = std::thread(&RotaryEncoder::poll_loop, this);
 }
@@ -525,50 +605,71 @@ RotaryEncoder::RotaryEncoder(const Config& cfg) : cfg_(cfg) {
 RotaryEncoder::~RotaryEncoder() {
     running_.store(false);
     if (poll_thread_.joinable()) poll_thread_.join();
-    if (line_btn_) gpiod_line_release(line_btn_);
-    if (line_b_)   gpiod_line_release(line_b_);
-    if (line_a_)   gpiod_line_release(line_a_);
-    if (chip_)     gpiod_chip_close(chip_);
+    if (ev_buf_btn_) gpiod_edge_event_buffer_free(ev_buf_btn_);
+    if (ev_buf_ab_)  gpiod_edge_event_buffer_free(ev_buf_ab_);
+    if (req_btn_)    gpiod_line_request_release(req_btn_);
+    if (req_ab_)     gpiod_line_request_release(req_ab_);
+    if (chip_)       gpiod_chip_close(chip_);
 }
 
-int  RotaryEncoder::pop_delta() { return delta_.exchange(0);   }
+int  RotaryEncoder::pop_delta() { return delta_.exchange(0);       }
 bool RotaryEncoder::pop_press() { return pressed_.exchange(false); }
 
 void RotaryEncoder::poll_loop() {
-    while (running_.load()) {
-        struct timespec ts{0, 10'000'000L};  // 10 ms
-        gpiod_line_bulk bulk, event_bulk;
-        gpiod_line_bulk_init(&bulk);
-        gpiod_line_bulk_add(&bulk, line_a_);
-        gpiod_line_bulk_add(&bulk, line_btn_);
+    // Dùng poll(2) để chờ event trên cả hai fd với timeout 10ms
+    // → không block vĩnh viễn, cho phép running_ được check đều đặn
+    struct pollfd fds[2];
+    fds[0].fd     = gpiod_line_request_get_fd(req_ab_);
+    fds[0].events = POLLIN;
+    fds[1].fd     = gpiod_line_request_get_fd(req_btn_);
+    fds[1].events = POLLIN;
 
-        int ret = gpiod_line_event_wait_bulk(&bulk, &ts, &event_bulk);
+    while (running_.load()) {
+        int ret = ::poll(fds, 2, 10);  // 10 ms timeout
+        if (ret < 0 && errno != EINTR) break;
         if (ret <= 0) continue;
 
-        int n = gpiod_line_bulk_num_lines(&event_bulk);
-        for (int i = 0; i < n; ++i) {
-            gpiod_line* ev_line = gpiod_line_bulk_get_line(&event_bulk, i);
-            gpiod_line_event ev;
-            if (gpiod_line_event_read(ev_line, &ev) < 0) continue;
+        // ── A/B events ────────────────────────────────────────────────────────
+        if (fds[0].revents & POLLIN) {
+            int n = gpiod_line_request_read_edge_events(
+                        req_ab_, ev_buf_ab_, 8);
+            for (int i = 0; i < n; ++i) {
+                gpiod_edge_event* ev =
+                    gpiod_edge_event_buffer_get_event(ev_buf_ab_, i);
+                // Chỉ xử lý line A (offset = cfg_.pin_a)
+                if (gpiod_edge_event_get_line_offset(ev) != cfg_.pin_a)
+                    continue;
 
-            if (ev_line == line_a_) {
-                int curr_a = (ev.event_type == GPIOD_LINE_EVENT_RISING_EDGE) ? 1 : 0;
-                int curr_b = gpiod_line_get_value(line_b_);
+                int curr_a = (gpiod_edge_event_get_event_type(ev) ==
+                              GPIOD_EDGE_EVENT_RISING_EDGE) ? 1 : 0;
+
+                // Đọc B hiện tại
+                gpiod_line_value bval =
+                    gpiod_line_request_get_value(req_ab_, cfg_.pin_b);
+                int curr_b = (bval == GPIOD_LINE_VALUE_ACTIVE) ? 1 : 0;
+
+                // EC11 standard: on A falling edge, B=1→CW(+1), B=0→CCW(-1)
                 if (curr_a == 0) {
                     int d = (curr_b == 1) ? 1 : -1;
                     if (cfg_.invert_dir) d = -d;
                     delta_.fetch_add(d);
                 }
                 last_a_ = curr_a;
-            } else if (ev_line == line_btn_) {
-                if (ev.event_type == GPIOD_LINE_EVENT_FALLING_EDGE) {
-                    auto now = std::chrono::steady_clock::now();
-                    auto gap = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                   now - last_btn_tp_).count();
-                    if (gap >= cfg_.debounce_ms) {
-                        pressed_.store(true);
-                        last_btn_tp_ = now;
-                    }
+            }
+        }
+
+        // ── BTN events ────────────────────────────────────────────────────────
+        if (fds[1].revents & POLLIN) {
+            int n = gpiod_line_request_read_edge_events(
+                        req_btn_, ev_buf_btn_, 4);
+            for (int i = 0; i < n; ++i) {
+                gpiod_edge_event* ev =
+                    gpiod_edge_event_buffer_get_event(ev_buf_btn_, i);
+                // Chỉ nhận FALLING edge (nút nhấn → LOW với pull-up)
+                // Debounce đã được kernel xử lý qua set_debounce_period()
+                if (gpiod_edge_event_get_event_type(ev) ==
+                    GPIOD_EDGE_EVENT_FALLING_EDGE) {
+                    pressed_.store(true);
                 }
             }
         }
