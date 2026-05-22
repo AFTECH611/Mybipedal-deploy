@@ -37,6 +37,8 @@ class ImuModule : public aimrt::ModuleBase {
   int    baud_{921600};
   bool   do_config_{false};
   double publish_frequency_ = 100.0f;
+  int bind_cpu_ = -1;
+  int rt_priority_ = -1;
   std::shared_ptr<dm_imu::ImuDriver> imu_;
   aimrt::CoreRef core_;
   aimrt::channel::PublisherRef pub_imu_;

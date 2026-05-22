@@ -39,8 +39,8 @@ public:
      * @param rt_priority    SCHED_FIFO priority; -1 = skip; khuyến nghị 80
      * @param bind_cpu       CPU affinity; -1 = skip; dùng isolated core
      */
-    bool open(bool configure_imu = true,
-              const std::string& rt_name = "imu_reader",
+    bool open(bool configure_imu,
+              const std::string& rt_name,
               int                rt_priority,
               int                bind_cpu);
     void close();
