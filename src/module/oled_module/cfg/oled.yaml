@@ -1,0 +1,53 @@
+# ── OLED MODULE ─────────────────────────────────────────────
+oled_fps:          20
+oled_boot_frames:  60
+oled_i2c_device:   /dev/i2c-7
+oled_i2c_addr:     0x3C
+sub_battery_name:  /battery_pct
+
+oled_encoder:
+  gpiochip:    /dev/gpiochip0
+  pin_a:       17
+  pin_b:       18
+  pin_btn:     27
+  debounce_ms: 50
+  invert_dir:  false
+
+sub_joy_vel_name: /cmd_vel_limiter
+sub_imu_data_name: /imu/data
+sub_joint_state_name: /joint_states
+pub_joint_cmd_name: /joint_cmd
+
+# ── ROBOT STATES ────────────────────────────────────────────────────────────────
+robot_states:
+
+  idle:
+    trigger_topic: /idle_mode
+    pre_states: [zero, stand]
+    controllers: [pd_idle]
+
+  zero:
+    trigger_topic: /zero_mode
+    pre_states: [idle, stand]
+    controllers: [pd_zero]
+
+  stand:
+    trigger_topic: /stand_mode
+    pre_states: [zero, walk]
+    controllers: [pd_zero, pd_stand]
+
+  walk:
+    trigger_topic: /walk_mode
+    pre_states: [stand]
+    controllers: [pd_zero, pd_stand, rl_walk]
+
+# ── JOINT LIST ──────────────────────────────────────────────────────────────────
+joint_list:
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_joint
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_joint
