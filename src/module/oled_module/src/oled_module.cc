@@ -25,9 +25,12 @@
 
 #include "aimrt_module_ros2_interface/channel/ros2_channel.h"
 #include <geometry_msgs/msg/twist.hpp>
+#include <yaml-cpp/yaml.h>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include "oled_module/global.h"
+
 
 namespace mybipedal_deploy::oled_module {
 
@@ -63,9 +66,6 @@ static std::string ToUpper(std::string s) {
 
 bool OledModule::Initialize(aimrt::CoreRef core) {
   core_ = core;
-  SetLogger(core_.GetLogger());
-  subs_.clear();
-
   // ── 1. Đọc YAML ────────────────────────────────────────────────────────────
   auto file_path = core_.GetConfigurator().GetConfigFilePath();
   try {

@@ -335,7 +335,7 @@ public:
 class OledDisplay {
 public:
     struct Config {
-        std::string           i2c_device  = "/dev/i2c-1";
+        std::string           i2c_device  = "/dev/i2c-7";
         uint8_t               i2c_addr    = 0x3C;
         int                   fps         = 20;
         int                   boot_frames = 60;   // frames giữ IpScreen
