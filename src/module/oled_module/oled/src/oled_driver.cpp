@@ -502,23 +502,48 @@ void Canvas::joystick_pad(int x, int y, int size, float sx, float sy) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 RotaryEncoder::RotaryEncoder(const Config& cfg) : cfg_(cfg) {
-    chip3_ = gpiod_chip_open(cfg_.gpiochip.c_str());
-    if (!chip3_)
-        throw std::runtime_error("RotaryEncoder: cannot open " + cfg_.gpiochip);
+    // 1. Mở gpiochip3 cho Encoder (A, B, BTN) và nút CONFIRM
+    chip3_ = gpiod_chip_open(cfg_.gpiochip3.c_str());
+    if (!chip3_) {
+        throw std::runtime_error("RotaryEncoder: cannot open " + cfg_.gpiochip3);
+    }
 
     line_a_   = gpiod_chip_get_line(chip3_, cfg_.pin_a);
     line_b_   = gpiod_chip_get_line(chip3_, cfg_.pin_b);
     line_btn_ = gpiod_chip_get_line(chip3_, cfg_.pin_btn);
-    if (!line_a_ || !line_b_ || !line_btn_)
-        throw std::runtime_error("RotaryEncoder: invalid GPIO pin");
+    // Nếu bạn có thêm nút confirm trên chip3:
+    // line_confirm_ = gpiod_chip_get_line(chip3_, cfg_.pin_confirm);
 
-    if (gpiod_line_request_both_edges_events(line_a_,   "oled-enc-a")   < 0 ||
-        gpiod_line_request_input            (line_b_,   "oled-enc-b")   < 0 ||
-        gpiod_line_request_both_edges_events(line_btn_, "oled-enc-btn") < 0)
-        throw std::runtime_error("RotaryEncoder: gpiod_line_request failed");
+    // 2. Mở gpiochip4 cho nút BACK
+    chip4_ = gpiod_chip_open(cfg_.gpiochip4.c_str());
+    if (!chip4_) {
+        // Nếu mở lỗi chip4, hãy giải phóng chip3 trước khi throw
+        gpiod_chip_close(chip3_);
+        throw std::runtime_error("RotaryEncoder: cannot open " + cfg_.gpiochip4);
+    }
 
-    last_a_ = gpiod_line_get_value(line_a_);
-    running_.store(true);
+    line_back_ = gpiod_chip_get_line(chip4_, cfg_.pin_back);
+
+    // 3. Cấu hình các chân Input / Interrupt Edge
+    if (!line_a_ || !line_b_ || !line_btn_ || !line_back_) {
+        if (chip3_) gpiod_chip_close(chip3_);
+        if (chip4_) gpiod_chip_close(chip4_);
+        throw std::runtime_error("RotaryEncoder: failed to get GPIO lines.");
+    }
+
+    // Đăng ký nhận sự kiện cạnh (Edge Events)
+    if (gpiod_line_request_rising_edge_events(line_btn_, "oled_encoder_btn") < 0 ||
+        gpiod_line_request_both_edges_events(line_a_, "oled_encoder_a") < 0 ||
+        gpiod_line_request_input(line_b_, "oled_encoder_b") < 0 ||
+        gpiod_line_request_rising_edge_events(line_back_, "oled_button_back") < 0) 
+    {
+        gpiod_chip_close(chip3_);
+        gpiod_chip_close(chip4_);
+        throw std::runtime_error("RotaryEncoder: failed to request line events/inputs.");
+    }
+
+    // Khởi chạy thread xử lý poll sự kiện
+    running_ = true;
     poll_thread_ = std::thread(&RotaryEncoder::poll_loop, this);
 }
 
@@ -529,6 +554,8 @@ RotaryEncoder::~RotaryEncoder() {
     if (line_b_)   gpiod_line_release(line_b_);
     if (line_a_)   gpiod_line_release(line_a_);
     if (chip3_)     gpiod_chip_close(chip3_);
+    if (chip4_) gpiod_chip_close(chip4_);
+}
 }
 
 int  RotaryEncoder::pop_delta() { return delta_.exchange(0);   }
