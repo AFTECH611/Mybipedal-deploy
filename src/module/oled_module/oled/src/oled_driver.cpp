@@ -502,13 +502,13 @@ void Canvas::joystick_pad(int x, int y, int size, float sx, float sy) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 RotaryEncoder::RotaryEncoder(const Config& cfg) : cfg_(cfg) {
-    chip_ = gpiod_chip_open(cfg_.gpiochip.c_str());
-    if (!chip_)
+    chip3_ = gpiod_chip_open(cfg_.gpiochip.c_str());
+    if (!chip3_)
         throw std::runtime_error("RotaryEncoder: cannot open " + cfg_.gpiochip);
 
-    line_a_   = gpiod_chip_get_line(chip_, cfg_.pin_a);
-    line_b_   = gpiod_chip_get_line(chip_, cfg_.pin_b);
-    line_btn_ = gpiod_chip_get_line(chip_, cfg_.pin_btn);
+    line_a_   = gpiod_chip_get_line(chip3_, cfg_.pin_a);
+    line_b_   = gpiod_chip_get_line(chip3_, cfg_.pin_b);
+    line_btn_ = gpiod_chip_get_line(chip3_, cfg_.pin_btn);
     if (!line_a_ || !line_b_ || !line_btn_)
         throw std::runtime_error("RotaryEncoder: invalid GPIO pin");
 
@@ -528,7 +528,7 @@ RotaryEncoder::~RotaryEncoder() {
     if (line_btn_) gpiod_line_release(line_btn_);
     if (line_b_)   gpiod_line_release(line_b_);
     if (line_a_)   gpiod_line_release(line_a_);
-    if (chip_)     gpiod_chip_close(chip_);
+    if (chip3_)     gpiod_chip_close(chip3_);
 }
 
 int  RotaryEncoder::pop_delta() { return delta_.exchange(0);   }
