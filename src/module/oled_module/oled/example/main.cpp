@@ -154,22 +154,27 @@ int main() {
     std::signal(SIGTERM, sig_handler);
 
     std::cout << "=========================================\n"
-              << "  OLED Static Test — SH1106 on I2C-1\n"
-              << "  q = thoát    w/s = encoder    Enter = OK\n"
+              << "  OLED Static Test — SH1106 on I2C-7\n"
+              << "  Radxa Rock 5B+  (libgpiod 1.6.x)\n"
+              << "  q = thoát    Encoder vật lý để navigate\n"
               << "=========================================\n"
               << std::flush;
 
     // ── Cấu hình ─────────────────────────────────────────────────────────────
     oled::OledDisplay::Config cfg;
-    cfg.i2c_device       = "/dev/i2c-1";
-    cfg.i2c_addr         = 0x3C;
-    cfg.fps              = 20;
-    cfg.boot_frames      = 40;   // 2 giây ở IpScreen rồi vào menu
+    cfg.i2c_device  = "/dev/i2c-7";   // Radxa 5B+: I2C7 = SDA pin35, SCL pin36
+    cfg.i2c_addr    = 0x3C;
+    cfg.fps         = 20;
+    cfg.boot_frames = 40;              // 2s ở IpScreen (40 frames @ 20fps)
 
-    cfg.encoder.gpiochip    = "/dev/gpiochip0";
-    cfg.encoder.pin_a       = 17;
-    cfg.encoder.pin_b       = 18;
-    cfg.encoder.pin_btn     = 27;
+    // Encoder — Radxa 5B+ physical pin → gpiochip + line offset
+    // Physical header pin 11/13/15 nằm trên GPIO bank nào cần xác nhận bằng:
+    //   gpioinfo | grep -A5 "gpiochip"
+    // Dưới đây dùng gpiochip3 và offset tương ứng (thay đổi nếu gpioinfo khác)
+    cfg.encoder.gpiochip    = "/dev/gpiochip3";
+    cfg.encoder.pin_a       = 13;  // physical pin 13 → offset trong gpiochip3
+    cfg.encoder.pin_b       = 11;  // physical pin 11
+    cfg.encoder.pin_btn     = 15;  // physical pin 15 (encoder push)
     cfg.encoder.debounce_ms = 50;
     cfg.encoder.invert_dir  = false;
 
@@ -181,7 +186,8 @@ int main() {
         std::cout << "[main] OledDisplay init OK\n";
     } catch (const std::exception& e) {
         std::cerr << "[main] FATAL: " << e.what() << "\n"
-                  << "       sudo i2cdetect -y 1  →  kiểm tra 0x3C\n";
+                  << "       sudo i2cdetect -y 7  →  kiểm tra 0x3C\n"
+                  << "       ls /dev/i2c-*  →  xác nhận i2c-7 tồn tại\n";
         return 1;
     }
 

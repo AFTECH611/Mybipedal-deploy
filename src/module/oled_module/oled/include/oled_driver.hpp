@@ -26,10 +26,9 @@
 #include <thread>
 #include <vector>
 
-// libgpiod v2 opaque types (forward declarations)
+// libgpiod 1.6.x — forward declarations (no bulk API)
 struct gpiod_chip;
-struct gpiod_line_request;
-struct gpiod_edge_event_buffer;
+struct gpiod_line;
 
 namespace oled {
 
@@ -147,18 +146,39 @@ private:
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  RotaryEncoder  — giữ nguyên (poll_thread_ là bắt buộc vì IRQ blocking)
+//  RotaryEncoder + Buttons
+//
+//  Radxa Rock 5B+ 40-pin header — confirmed mapping:
+//  ┌─────────────┬───────────┬───────────┬──────────┬────────────┐
+//  │ Function    │ Phys pin  │ GPIO      │ gpiochip │ line       │
+//  ├─────────────┼───────────┼───────────┼──────────┼────────────┤
+//  │ Encoder B   │   11      │ GPIO3_C1  │ chip3    │ 17         │
+//  │ Encoder A   │   13      │ GPIO3_B7  │ chip3    │ 15         │
+//  │ Encoder BTN │   15      │ GPIO3_C0  │ chip3    │ 16         │
+//  │ Btn CONFIRM │   16      │ GPIO3_A4  │ chip3    │  4         │
+//  │ Btn BACK    │   18      │ GPIO4_C4  │ chip4    │ 20         │
+//  └─────────────┴───────────┴───────────┴──────────┴────────────┘
+//
+//  Encoder A/B/BTN/CONFIRM đều trên gpiochip3 → dùng chung chip.
+//  BACK trên gpiochip4 → mở chip riêng.
 // ═══════════════════════════════════════════════════════════════════════════
 
 class RotaryEncoder {
 public:
     struct Config {
-        std::string gpiochip    = "/dev/gpiochip0";
-        unsigned    pin_a       = 17;
-        unsigned    pin_b       = 18;
-        unsigned    pin_btn     = 27;
-        int         debounce_ms = 50;
-        bool        invert_dir  = false;
+        // Encoder + CONFIRM — tất cả trên gpiochip3
+        std::string gpiochip3    = "/dev/gpiochip3";
+        unsigned    pin_a        = 15;  // GPIO3_B7 ← physical pin 13
+        unsigned    pin_b        = 17;  // GPIO3_C1 ← physical pin 11
+        unsigned    pin_btn      = 16;  // GPIO3_C0 ← physical pin 15
+        unsigned    pin_confirm  =  4;  // GPIO3_A4 ← physical pin 16
+
+        // BACK — trên gpiochip4
+        std::string gpiochip4    = "/dev/gpiochip4";
+        unsigned    pin_back     = 20;  // GPIO4_C4 ← physical pin 18
+
+        int  debounce_ms = 50;
+        bool invert_dir  = false;
     };
 
     explicit RotaryEncoder(const Config& cfg);
@@ -166,30 +186,36 @@ public:
     RotaryEncoder(const RotaryEncoder&)            = delete;
     RotaryEncoder& operator=(const RotaryEncoder&) = delete;
 
-    int  pop_delta();
-    bool pop_press();
+    int  pop_delta  ();   // encoder rotation: positive=CW, negative=CCW
+    bool pop_press  ();   // encoder push button
+    bool pop_confirm();   // dedicated CONFIRM button (pin 16)
+    bool pop_back   ();   // dedicated BACK    button (pin 18)
 
 private:
     Config cfg_;
 
-    // libgpiod v2 objects
-    gpiod_chip*              chip_       = nullptr;
-    gpiod_line_request*      req_ab_     = nullptr;  // A + B lines (input, edge on A)
-    gpiod_line_request*      req_btn_    = nullptr;  // BTN line    (input, both edges)
-    gpiod_edge_event_buffer* ev_buf_ab_  = nullptr;
-    gpiod_edge_event_buffer* ev_buf_btn_ = nullptr;
+    // gpiochip3 — encoder A, B, BTN, CONFIRM
+    gpiod_chip* chip3_       = nullptr;
+    gpiod_line* line_a_      = nullptr;  // edge events
+    gpiod_line* line_b_      = nullptr;  // input only
+    gpiod_line* line_btn_    = nullptr;  // edge events
+    gpiod_line* line_confirm_= nullptr;  // edge events
 
-    // A-line fd and B-line offset inside req_ab_
-    // B is requested as plain input (no edge), read via get_value
-    unsigned off_b_ = 0;  // offset of B within req_ab_ (index 1)
+    // gpiochip4 — BACK button
+    gpiod_chip* chip4_       = nullptr;
+    gpiod_line* line_back_   = nullptr;  // edge events
 
     std::atomic<int>  delta_  {0};
     std::atomic<bool> pressed_{false};
+    std::atomic<bool> confirm_{false};
+    std::atomic<bool> back_   {false};
     std::atomic<bool> running_{false};
     std::thread       poll_thread_;
 
     int last_a_{0};
     std::chrono::steady_clock::time_point last_btn_tp_{};
+    std::chrono::steady_clock::time_point last_confirm_tp_{};
+    std::chrono::steady_clock::time_point last_back_tp_{};
 
     void poll_loop();
 };
