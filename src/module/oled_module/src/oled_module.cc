@@ -18,7 +18,7 @@
 //  streaming, or joint control tasks.
 // =============================================================================
 
-#include "oled_module.h"
+#include "oled_module/oled_module.h"
 
 #include <arpa/inet.h>
 #include <pthread.h>
@@ -34,9 +34,9 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
-#include "gpio_input.h"
-#include "sbc_stats.h"
-#include "ui_renderer.h"
+#include "oled_module/gpio_input.h"
+#include "oled_module/sbc_stats.h"
+#include "oled_module/ui_renderer.h"
 
 using namespace std::chrono_literals;
 
