@@ -6,7 +6,10 @@ set(CUR_TARGET_NAME "oled")
 
 # Set file collection
 file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
-file(GLOB_RECURSE src src/*.cpp)
+file(GLOB_RECURSE src 
+    src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/protocol/*.cpp
+)
 
 add_subdirectory(example)
 
@@ -20,6 +23,7 @@ target_sources(${CUR_TARGET_NAME} PRIVATE ${src})
 target_include_directories(
   ${CUR_TARGET_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/protocol>
 )
 
 # Set head files of target
