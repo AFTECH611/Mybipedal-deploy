@@ -6,7 +6,7 @@
 #include "control_module/control_module.h"
 #include "imu_module/imu_module.h"
 // #include "sim_module/sim_module.h"
-#include "oled_module.h"
+#include "oled_module/oled_module.h"
 
 static std::tuple<std::string_view, std::function<aimrt::ModuleBase*()>>
     aimrt_module_register_array[]{
