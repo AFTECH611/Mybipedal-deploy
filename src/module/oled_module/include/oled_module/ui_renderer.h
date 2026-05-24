@@ -15,8 +15,8 @@
 #include <chrono>
 #include <string_view>
 
-#include "oled_module/event_queue.h"
-#include "oled_module/shared_data.h"
+#include "event_queue.h"
+#include "shared_data.h"
 #include "oled_driver.hpp"
 
 namespace mybipedal_deploy::oled_module {

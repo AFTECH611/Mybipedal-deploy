@@ -7,7 +7,7 @@
 #include <span>
 #include <string_view>
 
-#include "oled_module/oled/protocol/i2c.h"
+#include "i2c.h"
 
 // ---------------------------------------------------------------------------
 //  OledDriver  –  SSD1306 128×64 framebuffer driver

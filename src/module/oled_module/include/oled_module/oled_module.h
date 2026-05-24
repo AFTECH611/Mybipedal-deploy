@@ -37,9 +37,9 @@
 
 #include "aimrt_module_cpp_interface/module_base.h"
 
-#include "oled_module/event_queue.h"
-#include "oled_module/shared_data.h"
-#include "oled_module/ui_renderer.h"
+#include "event_queue.h"
+#include "shared_data.h"
+#include "ui_renderer.h"
 #include "oled_driver.hpp"
 
 namespace mybipedal_deploy::oled_module {
