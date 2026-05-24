@@ -30,9 +30,6 @@ robot_states:
     controllers: [pd_zero, pd_stand, rl_walk]
 
 # ── JOINT LIST ──────────────────────────────────────────────────────────────────
-# ĐÚNG thứ tự: right-side trước, left-side sau — khớp với ONNX policy (training)
-# Policy obs order: right_hip_roll, right_hip_pitch, right_knee, right_ankle,
-#                   left_hip_roll, left_hip_pitch, left_knee, left_ankle
 joint_list:
   - left_hip_roll_joint
   - left_hip_pitch_joint
@@ -88,7 +85,6 @@ controllers:
   pd_stand:
     joint_list: [left_hip_roll_joint, left_hip_pitch_joint, left_knee_joint, left_ankle_joint, right_hip_roll_joint, right_hip_pitch_joint, right_knee_joint, right_ankle_joint]
 
-    # Old (left-first): [0.05, 0.40, 0.80, -0.40, -0.05, -0.40, 0.80, -0.40]
     # Reordered to right-first: right values in old[4:8], left in old[0:4]
     init_state:  [0.00, 0.00,  0.00, 0.00,  0.00,  0.00,  0.00, 0.00]
     #              roll    pitch  knee   ankle  roll   pitch  knee   ankle
@@ -101,7 +97,6 @@ controllers:
   rl_walk:
     joint_list: [left_hip_roll_joint, left_hip_pitch_joint, left_knee_joint, left_ankle_joint, right_hip_roll_joint, right_hip_pitch_joint, right_knee_joint, right_ankle_joint]
 
-    # Old (left-first): [0.05, 0.40, 0.80, -0.40, -0.05, -0.40, 0.80, -0.40]
     # Reordered to right-first: right values in old[4:8], left in old[0:4]
     init_state:  [0.00, 0.00,  0.00, 0.00,  0.00,  0.00,  0.00, 0.00]
     #              roll    pitch  knee   ankle  roll   pitch  knee   ankle

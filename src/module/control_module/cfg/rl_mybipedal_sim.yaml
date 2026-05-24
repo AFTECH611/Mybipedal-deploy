@@ -30,9 +30,6 @@ robot_states:
     controllers: [pd_zero, pd_stand, rl_walk]
 
 # ── JOINT LIST ──────────────────────────────────────────────────────────────────
-# ĐÚNG thứ tự: right-side trước, left-side sau — khớp với ONNX policy (training)
-# Policy obs order: right_hip_roll, right_hip_pitch, right_knee, right_ankle,
-#                   left_hip_roll, left_hip_pitch, left_knee, left_ankle
 joint_list:
   - left_hip_roll_joint
   - left_hip_pitch_joint
@@ -44,8 +41,6 @@ joint_list:
   - right_ankle_joint
 
 # ── JOINT OFFSET ────────────────────────────────────────────────────────────────
-# Sim không có sai lệch cơ khí — đặt tất cả = 0
-# Khi chuyển sang real robot, điền offset thực tế đo được sau khi zero actuator
 joint_offset:
   left_hip_roll_joint:    0.0
   left_hip_pitch_joint:   0.0

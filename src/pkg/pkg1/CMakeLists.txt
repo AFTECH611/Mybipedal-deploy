@@ -27,7 +27,8 @@ target_link_libraries(
           ${CUR_SUPERIOR_NAMESPACE}::joy_stick_module
           ${CUR_SUPERIOR_NAMESPACE}::control_module
           ${CUR_SUPERIOR_NAMESPACE}::imu_module
-          ${CUR_SUPERIOR_NAMESPACE}::sim_module)
+          ${CUR_SUPERIOR_NAMESPACE}::sim_module
+          ${CUR_SUPERIOR_NAMESPACE}::oled_module)
 
 # Set installation of target
 set_property(TARGET ${CUR_TARGET_NAME} PROPERTY EXPORT_NAME ${CUR_TARGET_ALIAS_NAME})

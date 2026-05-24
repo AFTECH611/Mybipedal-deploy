@@ -1,0 +1,1 @@
+# if radxa 5b+ not working when execute ./run.sh: sudo LD_LIBRARY_PATH=/opt/ros/humble/lib ./run.sh
