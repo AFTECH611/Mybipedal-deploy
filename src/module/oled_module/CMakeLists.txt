@@ -8,10 +8,8 @@ string(REPLACE "::" "_" CUR_SUPERIOR_NAMESPACE_UNDERLINE ${CUR_SUPERIOR_NAMESPAC
 # Find packages
 find_package(sensor_msgs REQUIRED)
 find_package(Threads REQUIRED)
-
-# libgpiod (v1.x chardev ABI)
-find_library(GPIOD_LIB gpiod REQUIRED)
-find_path(GPIOD_INCLUDE gpiod.h REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GPIOD REQUIRED libgpiod)
 
 # Set target name
 set(CUR_TARGET_NAME ${CUR_SUPERIOR_NAMESPACE_UNDERLINE}_${CUR_DIR})
@@ -38,14 +36,14 @@ target_include_directories(
   ${CUR_TARGET_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  PUBLIC ${GPIOD_INCLUDE}
-  
+  PUBLIC ${GPIOD_INCLUDE_DIRS}  
 )
 
 # Set link libraries of target
 target_link_libraries(
   ${CUR_TARGET_NAME}
   PRIVATE yaml-cpp::yaml-cpp
+          ${GPIOD_LINK_LIBRARIES}
   PUBLIC oled
          aimrt::interface::aimrt_module_cpp_interface
          aimrt::interface::aimrt_module_ros2_interface
