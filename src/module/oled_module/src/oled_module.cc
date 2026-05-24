@@ -47,7 +47,6 @@ namespace mybipedal_deploy::oled_module {
 // ============================================================================
 bool OledModule::Initialize(aimrt::CoreRef core) {
   core_ = core;
-  SetLogger(core_.GetLogger());
   subs_.clear();
 
   auto file_path = core_.GetConfigurator().GetConfigFilePath();
