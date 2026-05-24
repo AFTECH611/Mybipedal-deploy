@@ -9,6 +9,10 @@ string(REPLACE "::" "_" CUR_SUPERIOR_NAMESPACE_UNDERLINE ${CUR_SUPERIOR_NAMESPAC
 find_package(sensor_msgs REQUIRED)
 find_package(Threads REQUIRED)
 
+# libgpiod (v1.x chardev ABI)
+find_library(GPIOD_LIB gpiod REQUIRED)
+find_path(GPIOD_INCLUDE gpiod.h REQUIRED)
+
 # Set target name
 set(CUR_TARGET_NAME ${CUR_SUPERIOR_NAMESPACE_UNDERLINE}_${CUR_DIR})
 set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
@@ -34,6 +38,8 @@ target_include_directories(
   ${CUR_TARGET_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PUBLIC ${GPIOD_INCLUDE}
+  
 )
 
 # Set link libraries of target
