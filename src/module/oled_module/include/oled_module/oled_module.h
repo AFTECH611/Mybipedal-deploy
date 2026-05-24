@@ -60,7 +60,7 @@ class OledModule : public aimrt::ModuleBase {
  private:
   // ── AimRT main loop (runs on executor) ───────────────────────────────────
   bool MainLoop();
-
+  auto GetLogger() { return core_.GetLogger(); }
   // ── Background thread bodies ──────────────────────────────────────────────
   void GpioThreadFunc();   ///< encoder + buttons → EventQueue
   void StatsThreadFunc();  ///< SBC stats → SharedData
