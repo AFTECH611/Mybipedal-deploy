@@ -348,7 +348,7 @@ void OledModule::SetThreadLowestPriority(std::thread& t) {
   param.sched_priority = 0;  // must be 0 for SCHED_OTHER
   int rc = ::pthread_setschedparam(t.native_handle(), SCHED_OTHER, &param);
   if (rc != 0) {
-    AIMRT_WARN("OledModule: pthread_setschedparam failed ({}), trying setpriority.", rc);
+    AIMRT_ERROR("OledModule: pthread_setschedparam failed ({}), trying setpriority.", rc);
   }
   // Also renice to +19 for maximum yielding behaviour
   ::setpriority(PRIO_PROCESS, 0, 19);
