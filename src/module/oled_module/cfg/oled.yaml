@@ -1,25 +1,53 @@
-# =============================================================================
-#  oled.yaml  –  Configuration for OledModule
-# =============================================================================
+# ── OLED MODULE ─────────────────────────────────────────────
+oled_fps:          20
+oled_boot_frames:  60
+oled_i2c_device:   /dev/i2c-7
+oled_i2c_addr:     0x3C
+sub_battery_name:  /battery_pct
 
-# ── OLED hardware ─────────────────────────────────────────────────────────────
-i2c_device:        /dev/i2c-7   # I²C bus where SSD1306 is connected
-oled_addr:         0x3C         # SSD1306 I²C address (0x3C or 0x3D)
-sleep_timeout_sec: 30           # seconds of inactivity before display sleeps
+oled_encoder:
+  gpiochip:    /dev/gpiochip0
+  pin_a:       17
+  pin_b:       18
+  pin_btn:     27
+  debounce_ms: 50
+  invert_dir:  false
 
-# ── Robot identity ────────────────────────────────────────────────────────────
-robot_name: "MyBipedal"
+sub_joy_vel_name: /cmd_vel_limiter
+sub_imu_data_name: /imu/data
+sub_joint_state_name: /joint_states
+pub_joint_cmd_name: /joint_cmd
 
-# ── GPIO pins  (Radxa 5B+ default layout) ─────────────────────────────────────
-gpio:
-  chip_encoder: gpiochip3   # /dev/gpiochip3  for encoder signals
-  clk:  13                  # Encoder CLK (A)  – gpiochip3 offset 13
-  dt:   15                  # Encoder DT  (B)  – gpiochip3 offset 15
-  sw:   16                  # Encoder SW push  – gpiochip3 offset 16
-  chip_back: gpiochip4      # /dev/gpiochip4  for back button
-  back: 20                  # Back button      – gpiochip4 offset 20
+# ── ROBOT STATES ────────────────────────────────────────────────────────────────
+robot_states:
 
-# ── AimRT topics ──────────────────────────────────────────────────────────────
-sub_joint_state_name: /joint_states   # sensor_msgs/JointState
-sub_imu_data_name:    /imu_data       # sensor_msgs/Imu
-sub_joy_name:         /joy_vel        # geometry_msgs/Twist  (cmd_vel)
+  idle:
+    trigger_topic: /idle_mode
+    pre_states: [zero, stand]
+    controllers: [pd_idle]
+
+  zero:
+    trigger_topic: /zero_mode
+    pre_states: [idle, stand]
+    controllers: [pd_zero]
+
+  stand:
+    trigger_topic: /stand_mode
+    pre_states: [zero, walk]
+    controllers: [pd_zero, pd_stand]
+
+  walk:
+    trigger_topic: /walk_mode
+    pre_states: [stand]
+    controllers: [pd_zero, pd_stand, rl_walk]
+
+# ── JOINT LIST ──────────────────────────────────────────────────────────────────
+joint_list:
+  - left_hip_roll_joint
+  - left_hip_pitch_joint
+  - left_knee_joint
+  - left_ankle_joint
+  - right_hip_roll_joint
+  - right_hip_pitch_joint
+  - right_knee_joint
+  - right_ankle_joint
