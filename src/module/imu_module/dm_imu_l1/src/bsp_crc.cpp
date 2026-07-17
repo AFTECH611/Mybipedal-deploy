@@ -58,17 +58,6 @@ static const uint16_t CRC16_table[256] = {
 };
 
 // ─────────────────────────────────────────────────────────────────
-uint8_t Get_CRC8(uint8_t init_value, const uint8_t* ptr, uint8_t len)
-{
-    uint8_t crc = init_value;
-    while (len--) {
-        uint8_t idx = crc ^ (*ptr++);
-        crc = CRC8_table[idx];
-    }
-    return crc;
-}
-
-// ─────────────────────────────────────────────────────────────────
 //  Get_CRC16 — ĐÚNG theo datasheet DM-IMU-L1 Appendix 4
 //
 //  Hai điểm khác với CCITT chuẩn:

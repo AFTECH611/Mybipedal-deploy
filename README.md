@@ -1,7 +1,23 @@
 ## Build
 
 ```bash
+# Build qpOASES thirdparty lib
+# Build Onnxruntime thirdparty lib
+git clone --recursive -b v1.19.2 https://github.com/microsoft/onnxruntime
+cd ~/onnxruntime
+sed -i 's/be8be39fdbc6e60e94fa7870b280707069b5b81a/32b145f525a8308d7ab1c09388b2e288312d8eba/' cmake/deps.txt
+./build.sh --config Release --build_shared_lib --parallel 2 \
+  --skip_tests \
+  --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 onnxruntime_BUILD_UNIT_TESTS=OFF
+cd ~/Mybipedal/src/module/control_module/third_party/lib
+# Copy bản mới vào
+cp ~/onnxruntime/build/Linux/Release/libonnxruntime.so.1.19.2 .
+cp ~/onnxruntime/build/Linux/Release/libonnxruntime_providers_shared.so .
+
+ln -sf libonnxruntime.so.1.19.2 libonnxruntime.so.1
+ln -sf libonnxruntime.so.1 libonnxruntime.so
 # Full build (CMake + compile + install to ./build/)
+source /opt/ros/humble/setup.bash
 ./build.sh
 
 # Custom cmake options:
@@ -22,6 +38,8 @@ cmake --build build --target install  # copies to build/bin
 cd build/bin
 sudo setcap cap_net_raw=ep ./aimrt_main
 ./aimrt_main --cfg_file_path=./cfg/x1_cfg.yaml
+# If program cannot run on Radxa 5b+ when executing ./run.sh try this:
+sudo LD_LIBRARY_PATH=/opt/ros/humble/lib ./run.sh
 
 # Simulation mode (MuJoCo + GLFW, no hardware)
 ./run_sim.sh  # → aimrt_main --cfg_file_path=./cfg/x1_cfg_sim.yaml
@@ -100,5 +118,3 @@ src/
 - **C++20 required**, GCC 13 enforced via `build.sh` (CC=/usr/bin/gcc-13)
 - Module parameters (gains, limits, state machine config) are in YAML, not hardcoded
 - The bundled third-party libs (ONNX Runtime, MuJoCo, qpOASES, DM IMU, Robstride) are in `control_module/third_party/`, `sim_module/third_party/`, `joy_stick_module/third_party/`, `joint_driver_module/robstride_controller/`, `imu_module/dm_imu_l1/`
-- No Cursor/Copilot rules files exist
-- If program cannot run on Radxa 5b+ when executing ./run.sh try this instead: sudo LD_LIBRARY_PATH=/opt/ros/humble/lib ./run.sh

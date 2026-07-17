@@ -411,10 +411,8 @@ bool ImuDriver::parseFrame(const uint8_t* frame, uint16_t flen) noexcept
     uint16_t crc_wire = static_cast<uint16_t>(frame[flen-3])
                       | (static_cast<uint16_t>(frame[flen-2]) << 8);
     if (__builtin_expect(crc_calc != crc_wire, 0)) {
-        if (Get_CRC16(frame+2, static_cast<uint16_t>(crc_len-2u)) != crc_wire) {
-            stat_crc_err_.fetch_add(1, std::memory_order_relaxed);
-            return false;
-        }
+        stat_crc_err_.fetch_add(1, std::memory_order_relaxed);
+        return false;
     }
 
     const float f1 = f32le(frame+4);
