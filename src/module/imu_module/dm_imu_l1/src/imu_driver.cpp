@@ -500,7 +500,7 @@ void ImuDriver::configureForLocomotion(int hz, uint8_t temp_c)
     std::cout << "[dm_imu] Configuring hz=" << hz << "\n";
     { uint8_t c[]={0xAA,0x06,0x01,0x0D}; sendCmd(c,4,5,15); } ms(100);
     turnOnAccel();  ms(20); turnOnGyro();  ms(20);
-    turnOnEuler();  ms(20); turnOnQuat();  ms(20);
+    turnOffEuler();  ms(20); turnOnQuat();  ms(20);
     setOutputHz(hz); ms(30);
     if (temp_c > 0) { enableTempControl(); ms(20); setTargetTemp(temp_c); ms(20); }
     saveParams(); ms(80);
